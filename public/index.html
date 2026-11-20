@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Puerto — Sistema de Gestión de Mariscos (CRUD) | Esmeraldas</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5.3 CSS & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <!-- Navbar Principal -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-maritime sticky-top py-2">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-3 m-0" href="#">
+                <div class="brand-icon-box" aria-hidden="true">
+                    <i class="bi bi-water"></i>
+                </div>
+                <div>
+                    <div class="brand-title text-white">Mariscos "El Puerto"</div>
+                    <div class="brand-subtitle">
+                        <i class="bi bi-geo-alt-fill me-1"></i>Puerto Pesquero Artesanal de Esmeraldas, Ecuador
+                    </div>
+                </div>
+            </a>
+
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarAcciones" aria-controls="navbarAcciones" aria-expanded="false" aria-label="Mostrar menú">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-end mt-3 mt-lg-0" id="navbarAcciones">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span id="apiStatusPill" class="api-status-pill">
+                        <span class="status-dot"></span>
+                        <span id="apiStatusText">Conectando API...</span>
+                    </span>
+                    <button type="button" id="btnActualizar" class="btn btn-sm btn-outline-light d-inline-flex align-items-center gap-1">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        <span>Actualizar</span>
+                    </button>
+                    <button type="button" id="btnAbrirSeed" class="btn btn-sm btn-info text-white fw-semibold d-inline-flex align-items-center gap-1">
+                        <i class="bi bi-database-fill-up"></i>
+                        <span>Cargar Muestra</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="container py-4">
+
+        <!-- Hero Banner + KPIs -->
+        <section class="hero-banner p-4 p-md-5 mb-4">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-8">
+                    <span class="hero-tag mb-3">
+                        <i class="bi bi-shield-check"></i>
+                        Sistema de Gestión e Inventario (CRUD Full-Stack)
+                    </span>
+                    <h1 class="h2 fw-bold mb-2">Control de Lotes de Pesca Artesanal y Exportación</h1>
+                    <p class="mb-0 text-white-50 small" style="max-width: 680px; line-height: 1.65;">
+                        Administre en tiempo real la recepción en muelle, trazabilidad por embarcación, cadena de frío y despacho comercial de lotes de mariscos consumiendo la API REST con Node.js, Express y MongoDB.
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <a href="#seccionListado" class="btn btn-light text-dark fw-semibold px-3 py-2 me-2 mb-2 mb-sm-0">
+                        <i class="bi bi-table me-1"></i>Ver Inventario
+                    </a>
+                    <a href="#seccionEndpoints" class="btn btn-outline-light fw-semibold px-3 py-2">
+                        <i class="bi bi-braces me-1"></i>API REST
+                    </a>
+                </div>
+            </div>
+
+            <!-- Indicadores clave -->
+            <div class="row g-3 mt-3 pt-3 border-top border-white border-opacity-10">
+                <div class="col-6 col-md-3">
+                    <div class="kpi-card h-100 d-flex flex-column justify-content-between">
+                        <div class="kpi-label"><i class="bi bi-box-seam me-1"></i>Total de Lotes</div>
+                        <div id="statTotalLotes" class="kpi-value">0</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="kpi-card h-100 d-flex flex-column justify-content-between">
+                        <div class="kpi-label"><i class="bi bi-speedometer2 me-1"></i>Peso Acumulado</div>
+                        <div id="statTotalKg" class="kpi-value text-info">0 kg</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="kpi-card h-100 d-flex flex-column justify-content-between">
+                        <div class="kpi-label"><i class="bi bi-cash-coin me-1"></i>Valor Estimado</div>
+                        <div id="statTotalValor" class="kpi-value text-warning">$0.00</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="kpi-card h-100 d-flex flex-column justify-content-between">
+                        <div class="kpi-label"><i class="bi bi-globe-americas me-1"></i>Para Exportación</div>
+                        <div id="statExportacion" class="kpi-value" style="color: #6ee7b7;">0</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grid principal: Formulario (Crear) + Listado/Tabla (Leer, Editar, Eliminar) -->
+        <div class="row g-4">
+
+            <!-- Columna Izquierda: Formulario POST /api/mariscos -->
+            <div class="col-lg-4">
+                <section class="panel-card panel-sticky">
+                    <div class="panel-card-header d-flex align-items-center justify-content-between">
+                        <div>
+                            <h2 class="h6 fw-bold mb-0 text-dark">
+                                <i class="bi bi-plus-circle-fill text-primary me-1"></i>Registrar Nuevo Lote
+                            </h2>
+                            <small class="text-muted">Método <span class="font-mono-code fw-semibold text-primary">POST /api/mariscos</span></small>
+                        </div>
+                        <span class="badge text-bg-light border">Nuevo</span>
+                    </div>
+
+                    <div class="p-3 p-md-4">
+                        <!-- Contenedor de errores del formulario -->
+                        <div id="formCrearAlert" class="alert alert-danger d-none py-2 px-3 small" role="alert"></div>
+
+                        <form id="formCrearLote" novalidate>
+                            <div class="mb-3">
+                                <label for="codigoLote" class="form-label">Código de Lote <span class="text-muted fw-normal">(opcional)</span></label>
+                                <input type="text" class="form-control font-mono-code" id="codigoLote" placeholder="Ej: LOTE-ESM-006 (se autogenera si vacío)">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="productoSelect" class="form-label">Producto / Especie <span class="text-danger">*</span></label>
+                                <select class="form-select mb-2" id="productoSelect">
+                                    <option value="Camarón Pomada de Exportación">Camarón Pomada de Exportación</option>
+                                    <option value="Camarón Blanco">Camarón Blanco</option>
+                                    <option value="Concha Prieta de Manglar (Anadara tuberculosa)">Concha Prieta de Manglar</option>
+                                    <option value="Corvina de Roca Entera">Corvina de Roca Entera</option>
+                                    <option value="Picudo Blanco en Tronchos Fresco">Picudo Blanco en Tronchos</option>
+                                    <option value="Langostino Real del Pacífico">Langostino Real del Pacífico</option>
+                                    <option value="Calamar Gigante del Pacífico">Calamar Gigante del Pacífico</option>
+                                    <option value="otro">+ Otro producto personalizado...</option>
+                                </select>
+                                <input type="text" class="form-control d-none" id="productoCustom" placeholder="Escriba el nombre del marisco o especie">
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label for="categoria" class="form-label">Categoría <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="categoria" required>
+                                        <option value="Crustáceos">Crustáceos</option>
+                                        <option value="Moluscos">Moluscos</option>
+                                        <option value="Peces">Peces</option>
+                                        <option value="Cefalópodos">Cefalópodos</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label for="calidad" class="form-label">Calidad</label>
+                                    <select class="form-select" id="calidad">
+                                        <option value="Exportación">Exportación</option>
+                                        <option value="Primera">Primera</option>
+                                        <option value="Segunda">Segunda</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label for="embarcacion" class="form-label">Embarcación <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="embarcacion" placeholder="Don Paco IV" required>
+                                </div>
+                                <div class="col-6">
+                                    <label for="pescadorResponsable" class="form-label">Pescador <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="pescadorResponsable" placeholder="Segundo Mina" required>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-4">
+                                    <label for="pesoKg" class="form-label">Peso (Kg) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="pesoKg" step="0.1" min="0.1" placeholder="250" required>
+                                </div>
+                                <div class="col-4">
+                                    <label for="precioKilo" class="form-label">$/Kg <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="precioKilo" step="0.05" min="0" placeholder="6.50" required>
+                                </div>
+                                <div class="col-4">
+                                    <label for="temperaturaAlmacenamiento" class="form-label">Temp (°C)</label>
+                                    <input type="number" class="form-control" id="temperaturaAlmacenamiento" step="0.5" value="-18">
+                                </div>
+                            </div>
+
+                            <!-- Vista previa de valor total -->
+                            <div class="valor-preview-box d-flex align-items-center justify-content-between mb-3">
+                                <span class="small text-muted fw-semibold">
+                                    <i class="bi bi-calculator me-1 text-primary"></i>Valor estimado del lote:
+                                </span>
+                                <span id="crearValorPreview" class="fw-bold text-success fs-6">$0.00 USD</span>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-sm-6">
+                                    <label for="destino" class="form-label">Destino Comercial</label>
+                                    <select class="form-select" id="destino">
+                                        <option value="Exportación (EE.UU./UE)">Exportación (EE.UU./UE)</option>
+                                        <option value="Nacional (Quito/Guayaquil)">Nacional (Quito/Guayaquil)</option>
+                                        <option value="Local (Esmeraldas)">Local (Esmeraldas)</option>
+                                    </select>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label for="estado" class="form-label">Estado en Planta</label>
+                                    <select class="form-select" id="estado">
+                                        <option value="Recibido en Muelle">Recibido en Muelle</option>
+                                        <option value="En Inspección">En Inspección</option>
+                                        <option value="Empacado">Empacado</option>
+                                        <option value="Distribuido">Distribuido</option>
+                                        <option value="Cancelado">Cancelado</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="observaciones" class="form-label">Observaciones</label>
+                                <textarea class="form-control" id="observaciones" rows="2" placeholder="Control de frescura, calibre o trazabilidad..."></textarea>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" id="btnGuardarLote" class="btn btn-ocean">
+                                    <i class="bi bi-floppy2-fill me-1"></i>Guardar Lote en Base de Datos
+                                </button>
+                                <button type="reset" id="btnLimpiarCrear" class="btn btn-sm btn-outline-secondary">
+                                    Limpiar formulario
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Columna Derecha: Filtros, Tabla de Registros y Referencia API -->
+            <div class="col-lg-8 d-flex flex-column gap-4">
+
+                <!-- Barra de Búsqueda y Filtros -->
+                <section class="panel-card p-3">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-12 col-sm-9">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-end-0 text-muted">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" id="busquedaInput" class="form-control border-start-0" placeholder="Buscar por código, especie, embarcación o pescador...">
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-3 d-grid">
+                            <button type="button" id="btnLimpiarFiltros" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center gap-1">
+                                <i class="bi bi-x-circle"></i>
+                                <span>Limpiar filtros</span>
+                            </button>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <select id="filtroCategoria" class="form-select form-select-sm" aria-label="Filtrar por categoría">
+                                <option value="">Todas las categorías</option>
+                                <option value="Crustáceos">Crustáceos</option>
+                                <option value="Moluscos">Moluscos</option>
+                                <option value="Peces">Peces</option>
+                                <option value="Cefalópodos">Cefalópodos</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <select id="filtroDestino" class="form-select form-select-sm" aria-label="Filtrar por destino">
+                                <option value="">Todos los destinos</option>
+                                <option value="Exportación (EE.UU./UE)">Exportación (EE.UU./UE)</option>
+                                <option value="Nacional (Quito/Guayaquil)">Nacional (Quito/Guayaquil)</option>
+                                <option value="Local (Esmeraldas)">Local (Esmeraldas)</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <select id="filtroEstado" class="form-select form-select-sm" aria-label="Filtrar por estado">
+                                <option value="">Todos los estados</option>
+                                <option value="Recibido en Muelle">Recibido en Muelle</option>
+                                <option value="En Inspección">En Inspección</option>
+                                <option value="Empacado">Empacado</option>
+                                <option value="Distribuido">Distribuido</option>
+                                <option value="Cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tabla Responsive de Lotes (GET /api/mariscos) -->
+                <section id="seccionListado" class="panel-card overflow-hidden">
+                    <div class="panel-card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <div>
+                            <h2 class="h6 fw-bold mb-0 text-dark">
+                                <i class="bi bi-list-ul text-primary me-1"></i>Inventario de Lotes Registrados
+                            </h2>
+                            <small id="contadorResultados" class="text-muted">Cargando registros desde MongoDB...</small>
+                        </div>
+                        <span class="badge rounded-pill text-bg-light border font-mono-code">GET /api/mariscos</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-lotes align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Código / Especie</th>
+                                    <th>Embarcación &amp; Pescador</th>
+                                    <th>Peso / Precio</th>
+                                    <th>Valor Total</th>
+                                    <th>Destino / Estado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaLotes">
+                                <tr>
+                                    <td colspan="6" class="text-center py-5 text-muted">
+                                        <div class="spinner-border text-primary mb-2" role="status">
+                                            <span class="visually-hidden">Cargando...</span>
+                                        </div>
+                                        <p class="mb-0 small">Conectando con la API y cargando lotes...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Referencia Interactiva de Endpoints REST -->
+                <section id="seccionEndpoints" class="panel-card p-3 p-md-4">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <h3 class="h6 fw-bold mb-0 text-dark">
+                            <i class="bi bi-hdd-network text-primary me-1"></i>Endpoints RESTful Implementados
+                        </h3>
+                        <small class="text-muted">Códigos HTTP: <span class="badge text-bg-success">200</span> <span class="badge text-bg-primary">201</span> <span class="badge text-bg-warning">400</span> <span class="badge text-bg-danger">404</span></small>
+                    </div>
+
+                    <div class="row g-2 font-mono-code small">
+                        <div class="col-md-6">
+                            <div class="endpoint-item d-flex align-items-center justify-content-between gap-2">
+                                <div class="text-truncate">
+                                    <span class="method-badge method-get me-1">GET</span>
+                                    <a href="/api/mariscos" target="_blank" class="text-decoration-none text-dark fw-semibold">/api/mariscos</a>
+                                </div>
+                                <span class="text-muted" style="font-size: 0.72rem;">Listar (200)</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="endpoint-item d-flex align-items-center justify-content-between gap-2">
+                                <div class="text-truncate">
+                                    <span class="method-badge method-get me-1">GET</span>
+                                    <span class="text-dark fw-semibold">/api/mariscos/:id</span>
+                                </div>
+                                <span class="text-muted" style="font-size: 0.72rem;">Detalle (200/404)</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="endpoint-item d-flex align-items-center justify-content-between gap-2">
+                                <div class="text-truncate">
+                                    <span class="method-badge method-post me-1">POST</span>
+                                    <span class="text-dark fw-semibold">/api/mariscos</span>
+                                </div>
+                                <span class="text-muted" style="font-size: 0.72rem;">Crear (201/400)</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="endpoint-item d-flex align-items-center justify-content-between gap-2">
+                                <div class="text-truncate">
+                                    <span class="method-badge method-put me-1">PUT</span>
+                                    <span class="text-dark fw-semibold">/api/mariscos/:id</span>
+                                </div>
+                                <span class="text-muted" style="font-size: 0.72rem;">Editar (200/400/404)</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="endpoint-item d-flex align-items-center justify-content-between gap-2">
+                                <div class="text-truncate">
+                                    <span class="method-badge method-delete me-1">DELETE</span>
+                                    <span class="text-dark fw-semibold">/api/mariscos/:id</span>
+                                </div>
+                                <span class="text-muted" style="font-size: 0.72rem;">Eliminar (200/404)</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="endpoint-item d-flex align-items-center justify-content-between gap-2">
+                                <div class="text-truncate">
+                                    <span class="method-badge method-post me-1">POST</span>
+                                    <span class="text-dark fw-semibold">/api/mariscos/seed</span>
+                                </div>
+                                <span class="text-muted" style="font-size: 0.72rem;">Datos muestra</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-maritime py-3 mt-4">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <strong>Distribuidora y Exportadora de Mariscos "El Puerto"</strong> &middot; Puerto Pesquero Artesanal de Esmeraldas, Ecuador
+            </div>
+            <div>
+                Node.js &middot; Express &middot; MongoDB &middot; Bootstrap 5 &middot; Vanilla JS (Async/Await)
+            </div>
+        </div>
+    </footer>
+
+    <!-- =====================================================================
+         MODAL 1: VER DETALLE DEL LOTE (GET /api/mariscos/:id)
+         ===================================================================== -->
+    <div class="modal fade" id="modalDetalle" tabindex="-1" aria-labelledby="modalDetalleLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header modal-header-ocean">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="modalDetalleLabel">
+                            <i class="bi bi-file-earmark-text me-2"></i>Ficha de Trazabilidad del Lote
+                        </h5>
+                        <small class="text-white-50 font-mono-code">GET /api/mariscos/:id</small>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4" id="modalDetalleBody">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" id="btnEditarDesdeDetalle" class="btn btn-primary btn-sm">
+                        <i class="bi bi-pencil-square me-1"></i>Editar este Lote
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 2: EDITAR LOTE EXISTENTE (PUT /api/mariscos/:id)
+         ===================================================================== -->
+    <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header modal-header-ocean">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="modalEditarLabel">
+                            <i class="bi bi-pencil-square me-2"></i>Editar Lote de Mariscos
+                        </h5>
+                        <small class="text-white-50 font-mono-code">PUT /api/mariscos/:id</small>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+
+                <form id="formEditarLote" novalidate>
+                    <div class="modal-body p-4">
+                        <input type="hidden" id="editId">
+                        <div id="formEditarAlert" class="alert alert-danger d-none py-2 px-3 small" role="alert"></div>
+
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="editCodigoLote" class="form-label">Código de Lote <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control font-mono-code" id="editCodigoLote" required>
+                            </div>
+                            <div class="col-md-8">
+                                <label for="editProducto" class="form-label">Producto / Especie <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editProducto" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="editCategoria" class="form-label">Categoría <span class="text-danger">*</span></label>
+                                <select class="form-select" id="editCategoria" required>
+                                    <option value="Crustáceos">Crustáceos</option>
+                                    <option value="Moluscos">Moluscos</option>
+                                    <option value="Peces">Peces</option>
+                                    <option value="Cefalópodos">Cefalópodos</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editCalidad" class="form-label">Calidad</label>
+                                <select class="form-select" id="editCalidad">
+                                    <option value="Exportación">Exportación</option>
+                                    <option value="Primera">Primera</option>
+                                    <option value="Segunda">Segunda</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editPuertoOrigen" class="form-label">Puerto de Origen</label>
+                                <input type="text" class="form-control" id="editPuertoOrigen">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="editEmbarcacion" class="form-label">Embarcación <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editEmbarcacion" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editPescador" class="form-label">Pescador Responsable <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editPescador" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="editPesoKg" class="form-label">Peso (Kg) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="editPesoKg" step="0.1" min="0.1" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editPrecioKilo" class="form-label">Precio / Kg (USD) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="editPrecioKilo" step="0.05" min="0" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="editTemperatura" class="form-label">Temperatura (°C)</label>
+                                <input type="number" class="form-control" id="editTemperatura" step="0.5">
+                            </div>
+
+                            <div class="col-12">
+                                <div class="valor-preview-box d-flex align-items-center justify-content-between">
+                                    <span class="small text-muted fw-semibold">
+                                        <i class="bi bi-calculator me-1 text-primary"></i>Nuevo valor total estimado:
+                                    </span>
+                                    <span id="editValorPreview" class="fw-bold text-success fs-6">$0.00 USD</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="editDestino" class="form-label">Destino Comercial</label>
+                                <select class="form-select" id="editDestino">
+                                    <option value="Exportación (EE.UU./UE)">Exportación (EE.UU./UE)</option>
+                                    <option value="Nacional (Quito/Guayaquil)">Nacional (Quito/Guayaquil)</option>
+                                    <option value="Local (Esmeraldas)">Local (Esmeraldas)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editEstado" class="form-label">Estado en Planta</label>
+                                <select class="form-select" id="editEstado">
+                                    <option value="Recibido en Muelle">Recibido en Muelle</option>
+                                    <option value="En Inspección">En Inspección</option>
+                                    <option value="Empacado">Empacado</option>
+                                    <option value="Distribuido">Distribuido</option>
+                                    <option value="Cancelado">Cancelado</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="editObservaciones" class="form-label">Observaciones</label>
+                                <textarea class="form-control" id="editObservaciones" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" id="btnGuardarEdicion" class="btn btn-ocean">
+                            <i class="bi bi-check2-circle me-1"></i>Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 3: CONFIRMAR ELIMINACIÓN (DELETE /api/mariscos/:id)
+         ===================================================================== -->
+    <div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fw-bold" id="modalEliminarLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="mb-2">¿Está seguro que desea eliminar permanentemente el siguiente lote del sistema?</p>
+                    <div class="p-3 bg-light rounded border">
+                        <div class="font-mono-code fw-bold text-danger" id="deleteLoteCodigo"></div>
+                        <div class="fw-semibold text-dark" id="deleteLoteProducto"></div>
+                    </div>
+                    <p class="small text-muted mt-3 mb-0">Esta acción ejecutará <code class="text-danger">DELETE /api/mariscos/:id</code> en MongoDB y no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btnConfirmarEliminar" class="btn btn-danger fw-semibold">
+                        <i class="bi bi-trash3-fill me-1"></i>Sí, Eliminar Lote
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODAL 4: CONFIRMAR RECARGA DE DATOS DE MUESTRA (SEED)
+         ===================================================================== -->
+    <div class="modal fade" id="modalSeed" tabindex="-1" aria-labelledby="modalSeedLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header modal-header-ocean">
+                    <h5 class="modal-title fw-bold" id="modalSeedLabel">
+                        <i class="bi bi-database-fill-up me-2"></i>Restablecer Datos de Muestra
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="mb-2">Se reemplazarán los registros actuales con los 5 lotes representativos del <strong>Puerto Pesquero Artesanal de Esmeraldas</strong>.</p>
+                    <p class="small text-muted mb-0">¿Desea continuar con esta operación?</p>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btnConfirmarSeed" class="btn btn-ocean">
+                        <i class="bi bi-arrow-repeat me-1"></i>Cargar Lotes de Muestra
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor de Notificaciones Toast -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+    <!-- Bootstrap 5.3 Bundle JS (Popper incluido) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Lógica del cliente Vanilla JS (async/await + fetch) -->
+    <script src="js/app.js"></script>
+</body>
+</html>
