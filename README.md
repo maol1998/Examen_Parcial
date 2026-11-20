@@ -9,4 +9,5 @@ Sistema web full-stack para la gestión y consulta de lotes de mariscos del Puer
 ## Instalación y Ejecución del Backend
 1. Clonar el repositorio:
    ```bash
-git clone https://github.com/maol1998/Examen_Parcial.git
+   git clone [https://github.com/maol1998/Examen_Parcial.git](https://github.com/maol1998/Examen_Parcial.git)
+   cd Examen_Parcial
